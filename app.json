@@ -1,7 +1,70 @@
 {
-  "name": "vortex-vpn-real",
-  "slug": "vortex-vpn-real",
-  "android": {
-    "package": "com.anonymous.vortexvpnreal"
+  "expo": {
+    "name": "Vortex Shield VPN",
+    "slug": "vortex-vpn",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#000000"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTabletMode": false,
+      "bundleIdentifier": "com.vortexvpn.app",
+      "buildNumber": "1",
+      "infoPlist": {
+        "NSLocalNetworkUsageDescription": "Vortex Shield VPN needs access to your local network",
+        "NSBonjourServiceTypes": [
+          "_http._tcp",
+          "_https._tcp"
+        ]
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#000000"
+      },
+      "package": "com.vortexvpn.app",
+      "versionCode": 1,
+      "permissions": [
+        "android.permission.INTERNET",
+        "android.permission.CHANGE_NETWORK_STATE",
+        "android.permission.BIND_VPN_SERVICE",
+        "android.permission.CHANGE_WIFI_STATE",
+        "android.permission.ACCESS_NETWORK_STATE",
+        "android.permission.QUERY_ALL_PACKAGES"
+      ],
+      "intentFilters": [
+        {
+          "action": "android.intent.action.MAIN",
+          "category": [
+            "android.intent.category.LAUNCHER"
+          ]
+        }
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-router",
+        {
+          "origin": false,
+          "asyncRoutes": true
+        }
+      ]
+    ],
+    "scheme": "vortexvpn",
+    "description": "Real working VPN app with support for multiple protocols and Nigerian carriers",
+    "author": "Vortex VPN Team",
+    "privacy": "private"
   }
 }
