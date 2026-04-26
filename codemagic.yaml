@@ -21,7 +21,7 @@ workflows:
           npm install -g expo-cli
       - name: Prebuild for Android
         script: |
-          npx expo prebuild --platform android --clean
+          npx expo prebuild --platform android --clean --non-interactive
       - name: Build Android Debug APK
         script: |
           cd android
@@ -61,7 +61,7 @@ workflows:
           npm install -g expo-cli
       - name: Prebuild for Android
         script: |
-          npx expo prebuild --platform android --clean
+          npx expo prebuild --platform android --clean --non-interactive
       - name: Build Release APK
         script: |
           cd android
