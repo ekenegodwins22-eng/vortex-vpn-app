@@ -1,65 +1,142 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, Component, ReactNode } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { VPNProvider } from '@/context/VPNContext';
 
-// Keep splash screen visible until we explicitly hide it
-SplashScreen.preventAutoHideAsync().catch(() => {
-  /* ignore */
-});
+// --- Error Boundary Component ---
+interface Props {
+  children: ReactNode;
+}
+
+interface State {
+  hasError: boolean;
+  error: Error | null;
+}
+
+class GlobalErrorBoundary extends Component<Props, State> {
+  constructor(props: Props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: any) {
+    console.error('CRITICAL APP ERROR:', error, errorInfo);
+    // Ensure splash is hidden even on crash
+    SplashScreen.hideAsync().catch(() => {});
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorTitle}>Oops! Something went wrong.</Text>
+          <Text style={styles.errorText}>{this.state.error?.message}</Text>
+          <TouchableOpacity 
+            style={styles.retryButton} 
+            onPress={() => this.setState({ hasError: false, error: null })}
+          >
+            <Text style={styles.retryText}>Retry</Text>
+          </TouchableOpacity>
+        </View>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+// --- Root Layout ---
+
+// Prevent auto-hide immediately
+SplashScreen.preventAutoHideAsync().catch(() => {});
 
 export default function RootLayout() {
   useEffect(() => {
     let isMounted = true;
-    
-    async function prepare() {
-      console.log('RootLayout: Starting preparation...');
+
+    async function initApp() {
+      console.log('App: Initializing...');
       
-      // Safety timeout: Always hide splash screen after 5 seconds regardless of what happens
-      const timeoutId = setTimeout(async () => {
+      // Force hide after 4 seconds as a fail-safe
+      const failSafeTimeout = setTimeout(() => {
         if (isMounted) {
-          console.log('RootLayout: Preparation timeout reached, forcing splash hide');
-          await SplashScreen.hideAsync().catch(() => {/* ignore */});
+          console.log('App: Fail-safe triggered, hiding splash');
+          SplashScreen.hideAsync().catch(() => {});
         }
-      }, 5000);
+      }, 4000);
 
       try {
-        // You can add font loading or other initialization here
-        // await Font.loadAsync({...});
-        console.log('RootLayout: Preparation tasks finished');
+        // Pre-load necessary assets or fonts here if needed
+        console.log('App: Ready');
       } catch (e) {
-        console.warn('RootLayout: Preparation error:', e);
+        console.warn('App: Init Error', e);
       } finally {
-        clearTimeout(timeoutId);
+        clearTimeout(failSafeTimeout);
         if (isMounted) {
-          console.log('RootLayout: Hiding splash screen');
-          await SplashScreen.hideAsync().catch((err) => {
-            console.warn('RootLayout: Error hiding splash screen:', err);
-          });
+          await SplashScreen.hideAsync().catch(() => {});
         }
       }
     }
 
-    prepare();
-    
+    initApp();
+
     return () => {
       isMounted = false;
     };
   }, []);
 
   return (
-    <VPNProvider>
-      <Stack
-        screenOptions={{
-          headerShown: false,
-          contentStyle: { backgroundColor: '#000000' },
-        }}
-      >
-        <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="index" />
-      </Stack>
-      <StatusBar style="light" backgroundColor="#000000" />
-    </VPNProvider>
+    <GlobalErrorBoundary>
+      <VPNProvider>
+        <Stack
+          screenOptions={{
+            headerShown: false,
+            contentStyle: { backgroundColor: '#000000' },
+          }}
+        >
+          <Stack.Screen name="(tabs)" />
+        </Stack>
+        <StatusBar style="light" />
+      </VPNProvider>
+    </GlobalErrorBoundary>
   );
 }
+
+const styles = StyleSheet.create({
+  errorContainer: {
+    flex: 1,
+    backgroundColor: '#000',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 20,
+  },
+  errorTitle: {
+    color: '#0A84FF',
+    fontSize: 22,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  errorText: {
+    color: '#fff',
+    fontSize: 14,
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  retryButton: {
+    backgroundColor: '#1a1a1a',
+    paddingHorizontal: 30,
+    paddingVertical: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#0A84FF',
+  },
+  retryText: {
+    color: '#0A84FF',
+    fontWeight: 'bold',
+  },
+});

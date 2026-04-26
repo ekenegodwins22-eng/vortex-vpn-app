@@ -31,7 +31,7 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#000000"
       },
-      "package": "com.vortexvpn.app",
+      "package": "com.anonymous.vortexvpnreal",
       "versionCode": 1,
       "permissions": [
         "android.permission.INTERNET",
