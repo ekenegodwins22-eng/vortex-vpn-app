@@ -25,6 +25,11 @@ export const VPNBridge = {
       throw new Error('VPN functionality only available on Android');
     }
 
+    if (!VPNModule) {
+      console.warn('VPNModule is not available');
+      throw new Error('VPN Native Module not found');
+    }
+
     try {
       const result = await VPNModule.connect(
         server.ip,
@@ -46,6 +51,11 @@ export const VPNBridge = {
       throw new Error('VPN functionality only available on Android');
     }
 
+    if (!VPNModule) {
+      console.warn('VPNModule is not available');
+      return 'Disconnected (Module Missing)';
+    }
+
     try {
       const result = await VPNModule.disconnect();
       return result;
@@ -59,7 +69,7 @@ export const VPNBridge = {
    * Get current VPN status
    */
   async getStatus(): Promise<VPNStatus> {
-    if (Platform.OS !== 'android') {
+    if (Platform.OS !== 'android' || !VPNModule) {
       return {
         connected: false,
         status: 'DISCONNECTED',

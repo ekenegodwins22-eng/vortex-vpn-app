@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext, useCallback, useEffect } from 'react';
-import { VPNBridge, VPNServer } from '@/vpn-bridge';
+import { VPNBridge } from '@/vpn-bridge';
 
 const API_URL = 'https://vortex-vpn-backend-production.up.railway.app';
 
@@ -48,19 +48,34 @@ export const VPNProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [selectedProtocol, setSelectedProtocol] = useState<any>('WireGuard');
   const [selectedCarrier, setSelectedCarrier] = useState<any>('All');
   const [servers, setServers] = useState<VPNServer[]>([]);
-  const [protocols, setProtocols] = useState<string[]>([]);
-  const [carriers, setCarriers] = useState<string[]>([]);
+  const [protocols, setProtocols] = useState<string[]>(['OpenVPN', 'WireGuard', 'V2Ray', 'SSH', 'DNS', 'HTTP-SNI']);
+  const [carriers, setCarriers] = useState<string[]>(['All', 'MTN', 'Airtel', 'Glo']);
   const [connectionTime, setConnectionTime] = useState(0);
   const [speed, setSpeed] = useState(0);
   const [ip, setIp] = useState('0.0.0.0');
   const [ping, setPing] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
+  // Fetch with timeout helper
+  const fetchWithTimeout = async (url: string, options = {}, timeout = 5000) => {
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), timeout);
+    try {
+      const response = await fetch(url, { ...options, signal: controller.signal });
+      clearTimeout(id);
+      return response;
+    } catch (e) {
+      clearTimeout(id);
+      throw e;
+    }
+  };
+
   // Load servers from backend
   const loadServers = useCallback(async () => {
     try {
+      console.log('VPNContext: Loading servers...');
       setError(null);
-      const response = await fetch(`${API_URL}/api/servers`);
+      const response = await fetchWithTimeout(`${API_URL}/api/servers`);
       const data = await response.json();
 
       if (data.success) {
@@ -70,45 +85,16 @@ export const VPNProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         }
       }
     } catch (err) {
-      console.error('Failed to load servers:', err);
-      setError('Failed to load servers. Check backend connection.');
-    }
-  }, []);
-
-  // Load protocols
-  const loadProtocols = useCallback(async () => {
-    try {
-      const response = await fetch(`${API_URL}/api/protocols`);
-      const data = await response.json();
-
-      if (data.success) {
-        setProtocols(data.protocols);
-      }
-    } catch (err) {
-      console.error('Failed to load protocols:', err);
-    }
-  }, []);
-
-  // Load carriers
-  const loadCarriers = useCallback(async () => {
-    try {
-      const response = await fetch(`${API_URL}/api/carriers`);
-      const data = await response.json();
-
-      if (data.success) {
-        setCarriers(data.carriers);
-      }
-    } catch (err) {
-      console.error('Failed to load carriers:', err);
+      console.warn('VPNContext: Failed to load servers:', err);
+      // Don't set blocking error state here to allow app to at least open
     }
   }, []);
 
   // Load initial data
   useEffect(() => {
     loadServers();
-    loadProtocols();
-    loadCarriers();
-  }, [loadServers, loadProtocols, loadCarriers]);
+    // Protocols and carriers have defaults, so we don't strictly need to fetch them to show the UI
+  }, [loadServers]);
 
   // Connection timer
   useEffect(() => {
@@ -131,7 +117,7 @@ export const VPNProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setSelectedServer(server);
 
         // Get server config from backend
-        const configResponse = await fetch(`${API_URL}/api/servers/${server.id}/config`);
+        const configResponse = await fetchWithTimeout(`${API_URL}/api/servers/${server.id}/config`);
         const configData = await configResponse.json();
 
         if (!configData.success) {
@@ -139,19 +125,22 @@ export const VPNProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         }
 
         // Connect via native VPN
+        // Map protocol for bridge if necessary
+        let bridgeProtocol: any = selectedProtocol;
+        if (bridgeProtocol === 'OpenVPN') bridgeProtocol = 'UDP';
+
         await VPNBridge.connect({
           ip: server.ip,
           port: server.port,
-          protocol: selectedProtocol,
+          protocol: bridgeProtocol,
         });
 
         setConnected(true);
         setConnectionTime(0);
         setIp(server.ip);
         setPing(server.ping);
-        console.log(`Connected to ${server.name} using ${selectedProtocol}`);
       } catch (err: any) {
-        console.error('Connection failed:', err);
+        console.error('VPNContext: Connection failed:', err);
         setError(err.message || 'Connection failed');
         setConnected(false);
       } finally {
@@ -170,9 +159,8 @@ export const VPNProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setConnectionTime(0);
       setSpeed(0);
       setIp('0.0.0.0');
-      console.log('Disconnected from VPN');
     } catch (err: any) {
-      console.error('Disconnection failed:', err);
+      console.error('VPNContext: Disconnection failed:', err);
       setError(err.message || 'Disconnection failed');
     } finally {
       setConnecting(false);
