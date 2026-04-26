@@ -2,7 +2,7 @@
   "name": "vortex-shield-vpn",
   "version": "1.0.0",
   "description": "Real working VPN app like Creebtunnel",
-  "main": "index.mjs",
+  "main": "expo-router/entry",
   "scripts": {
     "start": "expo start",
     "android": "expo run:android",
