@@ -1,0 +1,87 @@
+workflows:
+  android-workflow:
+    name: Android Build
+    instance_type: mac_mini_m1
+    max_build_duration: 60
+    environment:
+      vars:
+        PACKAGE_NAME: "com.vortexvpn.app"
+        BUNDLE_ID: "com.vortexvpn.app"
+      node: 18
+      xcode: latest
+    triggering:
+      events:
+        - push
+      branch:
+        - master
+        - main
+    scripts:
+      - name: Install dependencies
+        script: |
+          npm install --force
+      - name: Install Expo CLI
+        script: |
+          npm install -g expo-cli
+      - name: Prebuild for Android
+        script: |
+          npx expo prebuild --platform android --clean
+      - name: Build Android APK
+        script: |
+          cd android
+          ./gradlew assembleDebug
+      - name: Build Android Release APK
+        script: |
+          cd android
+          ./gradlew assembleRelease
+    artifacts:
+      - android/app/build/outputs/apk/debug/app-debug.apk
+      - android/app/build/outputs/apk/release/app-release.apk
+    publishing:
+      email:
+        recipients:
+          - ekenegodwins22@gmail.com
+        notify:
+          success: true
+          failure: true
+
+  android-release:
+    name: Android Release Build
+    instance_type: mac_mini_m1
+    max_build_duration: 60
+    environment:
+      vars:
+        PACKAGE_NAME: "com.vortexvpn.app"
+      node: 18
+    triggering:
+      events:
+        - tag
+      tag:
+        pattern: 'v\d+\.\d+\.\d+'
+    scripts:
+      - name: Install dependencies
+        script: |
+          npm install --force
+      - name: Install Expo CLI
+        script: |
+          npm install -g expo-cli
+      - name: Prebuild for Android
+        script: |
+          npx expo prebuild --platform android --clean
+      - name: Build Release APK
+        script: |
+          cd android
+          ./gradlew assembleRelease
+      - name: Build Release Bundle
+        script: |
+          cd android
+          ./gradlew bundleRelease
+    artifacts:
+      - android/app/build/outputs/apk/release/app-release.apk
+      - android/app/build/outputs/bundle/release/app-release.aab
+    publishing:
+      email:
+        recipients:
+          - ekenegodwins22@gmail.com
+        notify:
+          success: true
+          failure: true
