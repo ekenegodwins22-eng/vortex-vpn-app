@@ -60,7 +60,8 @@
           "origin": false,
           "asyncRoutes": true
         }
-      ]
+      ],
+      "expo-splash-screen"
     ],
     "scheme": "vortexvpn",
     "description": "Real working VPN app with support for multiple protocols and Nigerian carriers",

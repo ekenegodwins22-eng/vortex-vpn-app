@@ -1,11 +1,23 @@
 import React, { useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { Stack } from 'expo-router';
+import * as SplashScreen from 'expo-splash-screen';
 import { VPNProvider } from '@/context/VPNContext';
+
+SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   useEffect(() => {
-    // Initialize app
+    async function prepare() {
+      try {
+        // Any async font loading or setup goes here
+      } catch (e) {
+        console.warn('Layout prepare error:', e);
+      } finally {
+        await SplashScreen.hideAsync();
+      }
+    }
+    prepare();
   }, []);
 
   return (
@@ -18,7 +30,7 @@ export default function RootLayout() {
       >
         <Stack.Screen name="(tabs)" />
       </Stack>
-      <StatusBar barStyle="light-content" backgroundColor="#000000" />
+      <StatusBar style="light" backgroundColor="#000000" />
     </VPNProvider>
   );
 }
