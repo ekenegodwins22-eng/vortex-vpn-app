@@ -5,6 +5,9 @@ import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { VPNProvider } from '@/context/VPNContext';
 
+// Prevent auto-hide immediately at module level
+SplashScreen.preventAutoHideAsync().catch(() => {});
+
 // --- Error Boundary Component ---
 interface Props {
   children: ReactNode;
@@ -27,7 +30,6 @@ class GlobalErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, errorInfo: any) {
     console.error('CRITICAL APP ERROR:', error, errorInfo);
-    // Ensure splash is hidden even on crash
     SplashScreen.hideAsync().catch(() => {});
   }
 
@@ -52,32 +54,31 @@ class GlobalErrorBoundary extends Component<Props, State> {
 
 // --- Root Layout ---
 
-// Prevent auto-hide immediately
-SplashScreen.preventAutoHideAsync().catch(() => {});
-
 export default function RootLayout() {
   useEffect(() => {
     let isMounted = true;
 
     async function initApp() {
-      console.log('App: Initializing...');
+      console.log('App: Starting RootLayout initialization...');
       
-      // Force hide after 4 seconds as a fail-safe
+      // Force hide after 3 seconds as a fail-safe
       const failSafeTimeout = setTimeout(() => {
         if (isMounted) {
-          console.log('App: Fail-safe triggered, hiding splash');
+          console.log('App: Fail-safe triggered, forcing splash hide');
           SplashScreen.hideAsync().catch(() => {});
         }
-      }, 4000);
+      }, 3000);
 
       try {
-        // Pre-load necessary assets or fonts here if needed
-        console.log('App: Ready');
+        // Wait a small amount of time to ensure native side is ready
+        await new Promise(resolve => setTimeout(resolve, 500));
+        console.log('App: Initialization ready');
       } catch (e) {
         console.warn('App: Init Error', e);
       } finally {
         clearTimeout(failSafeTimeout);
         if (isMounted) {
+          console.log('App: Hiding splash screen');
           await SplashScreen.hideAsync().catch(() => {});
         }
       }

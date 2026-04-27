@@ -1,15 +1,11 @@
 import React from 'react';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import HomeScreen from './index';
-import ServersScreen from './servers';
-import SettingsScreen from './settings';
-
-const Tab = createBottomTabNavigator();
+import { Text } from 'react-native';
 
 export default function TabLayout() {
   return (
-    <Tab.Navigator
+    <Tabs
       screenOptions={({ route }) => ({
         headerShown: false,
         tabBarStyle: {
@@ -45,11 +41,24 @@ export default function TabLayout() {
         },
       })}
     >
-      <Tab.Screen name="index" component={HomeScreen} />
-      <Tab.Screen name="servers" component={ServersScreen} />
-      <Tab.Screen name="settings" component={SettingsScreen} />
-    </Tab.Navigator>
+      <Tabs.Screen
+        name="index"
+        options={{
+          title: 'Connect',
+        }}
+      />
+      <Tabs.Screen
+        name="servers"
+        options={{
+          title: 'Servers',
+        }}
+      />
+      <Tabs.Screen
+        name="settings"
+        options={{
+          title: 'Settings',
+        }}
+      />
+    </Tabs>
   );
 }
-
-import { Text } from 'react-native';
