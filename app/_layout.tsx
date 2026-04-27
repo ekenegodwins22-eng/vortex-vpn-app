@@ -61,13 +61,17 @@ export default function RootLayout() {
     async function initApp() {
       console.log('App: Starting RootLayout initialization...');
       
-      // Force hide after 3 seconds as a fail-safe
+      // Force hide after 2 seconds as a fail-safe
       const failSafeTimeout = setTimeout(() => {
         if (isMounted) {
           console.log('App: Fail-safe triggered, forcing splash hide');
-          SplashScreen.hideAsync().catch(() => {});
+          try {
+            SplashScreen.hideAsync().catch(() => {});
+          } catch (e) {
+            console.error('Fail-safe hide error:', e);
+          }
         }
-      }, 3000);
+      }, 2000);
 
       try {
         // Wait a small amount of time to ensure native side is ready
@@ -79,7 +83,11 @@ export default function RootLayout() {
         clearTimeout(failSafeTimeout);
         if (isMounted) {
           console.log('App: Hiding splash screen');
-          await SplashScreen.hideAsync().catch(() => {});
+          try {
+            await SplashScreen.hideAsync().catch(() => {});
+          } catch (e) {
+            console.error('Splash hide error:', e);
+          }
         }
       }
     }
