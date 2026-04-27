@@ -3,10 +3,20 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
+import * as Notifications from 'expo-notifications';
 import { VPNProvider } from '@/context/VPNContext';
 
 // Prevent auto-hide immediately at module level
 SplashScreen.preventAutoHideAsync().catch(() => {});
+
+// Setup notification handler
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: true,
+  }),
+});
 
 // --- Error Boundary Component ---
 interface Props {
@@ -61,32 +71,27 @@ export default function RootLayout() {
     async function initApp() {
       console.log('App: Starting RootLayout initialization...');
       
-      // Force hide after 2 seconds as a fail-safe
-      const failSafeTimeout = setTimeout(() => {
-        if (isMounted) {
-          console.log('App: Fail-safe triggered, forcing splash hide');
-          try {
-            SplashScreen.hideAsync().catch(() => {});
-          } catch (e) {
-            console.error('Fail-safe hide error:', e);
-          }
-        }
-      }, 2000);
-
       try {
+        // Request notification permissions
+        const { status } = await Notifications.requestPermissionsAsync();
+        console.log('Notification permission status:', status);
+        
         // Wait a small amount of time to ensure native side is ready
-        await new Promise(resolve => setTimeout(resolve, 500));
-        console.log('App: Initialization ready');
-      } catch (e) {
-        console.warn('App: Init Error', e);
-      } finally {
-        clearTimeout(failSafeTimeout);
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        console.log('App: Initialization complete, hiding splash screen');
+        
         if (isMounted) {
-          console.log('App: Hiding splash screen');
+          await SplashScreen.hideAsync().catch((err) => {
+            console.warn('Splash hide warning:', err);
+          });
+        }
+      } catch (e) {
+        console.error('App: Initialization error:', e);
+        if (isMounted) {
           try {
             await SplashScreen.hideAsync().catch(() => {});
-          } catch (e) {
-            console.error('Splash hide error:', e);
+          } catch (hideErr) {
+            console.error('Splash hide error:', hideErr);
           }
         }
       }
@@ -106,9 +111,15 @@ export default function RootLayout() {
           screenOptions={{
             headerShown: false,
             contentStyle: { backgroundColor: '#000000' },
+            animationEnabled: true,
           }}
         >
-          <Stack.Screen name="(tabs)" />
+          <Stack.Screen 
+            name="(tabs)" 
+            options={{
+              animationEnabled: false,
+            }}
+          />
         </Stack>
         <StatusBar style="light" />
       </VPNProvider>
